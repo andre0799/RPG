@@ -4,6 +4,7 @@
 	<title>RPG Peniano</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script type="text/javascript" src="js/jquery.js"></script>
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Press+Start+2P">
 </head>
 <body id="body">
 
@@ -18,6 +19,8 @@
 	<form onsubmit="submit_text();return false;">
 		<input type="text" name="" autocomplete="off" id="msg" style="width:330px" />
 		<input type="submit" value="Send" />
+		
+		<input type="button" onclick="send_socket('peniano','attack_melee','enemy,0,1');" value="peniana" />
 	</form>
 	</div>
 
@@ -45,6 +48,7 @@ var chars = {};
 <script type="text/javascript" src="js/netplayer.js"></script>
 <script type="text/javascript" src="js/player.js"></script>
 <script type="text/javascript" src="js/map.js"></script>
+<script type="text/javascript" src="js/map_render.js"></script>
 
 
 <input type="hidden" id="id" />
@@ -62,6 +66,16 @@ document.onkeyup = checkKey2;
 var params = getSearchParameters();
 
 document.body.style.zoom="115%"
+
+
+
+/* Sets game song */
+myAudio = new Audio('game.wav'); 
+myAudio.addEventListener('ended', function() {
+    this.currentTime = 0;
+    this.play();
+}, false);
+myAudio.play();
 
 </script>
 

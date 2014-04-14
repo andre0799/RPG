@@ -13,6 +13,20 @@ body {
 	left: 10px;
 }
 
+#hit {
+	position:absolute;
+	left:-34px;
+	top:-27px;
+	font-family:'Press Start 2P';
+	font-size:15px;
+	width:100px;
+	margin:auto;
+	text-align:center;
+	font-weight:bold;
+	color:#FFF;
+	text-shadow: 2px 2px 3px #000;
+}
+
 #username {
 	color:#FFF;
 	position:absolute;

@@ -1,3 +1,8 @@
+/* Sounds */
+var sounds_sword = new Audio("sword_attack.wav");
+
+
+
 
 /* Self Player ========================================================================================================================= */
 function initialize() {
@@ -113,7 +118,52 @@ function checkKey2(e) {
     send_socket(params.user, 'direction', 2);
 	$('#char').attr('class','char_right');
     }
+    
+    
+    else if(e.keyCode == '88'){	
+    // Attack - Melee
+    //send_socket(params.user, 'direction', 2);
+	attack_melee(check_direction());
+    }
 }
+
+
+/* Attack - Melee ===================================================================================================== */
+function attack_melee(dir){
+	if(dir == 1){
+		x_melee = x;
+		y_melee = y-1;		
+	} else if(dir == 2){
+		x_melee = x+1;
+		y_melee = y;
+	} else if(dir == 3){
+		x_melee = x;
+		y_melee = y+1;
+	} else if(dir == 4){
+		x_melee = x-1;
+		y_melee = y;
+	}
+	
+	render_melee_attack(x_melee,y_melee);
+	for(key in chars)
+	{
+		console.log("MELEE: "+key+", x/y "+chars[key][0]+" "+chars[key][1]);
+		if(chars[key][0] == x_melee && chars[key][1] == y_melee)
+		{
+			send_socket(params.user, 'attack_melee', key+','+x_melee+','+y_melee);
+		}
+		
+	}
+}
+
+
+/* Attack - Melee ===================================================================================================== */
+function render_melee_attack(x_melee, y_melee){
+	sounds_sword.pause();
+	sounds_sword.play();
+	$("#body").append('<div id='+id+' style="top:'+(y_melee*SQUARE)+'px;left:'+(x_melee*SQUARE)+'px;position:absolute;z-index:'+y_melee+'; width: 32px; height: 32px; background:#FF0000"></div>');
+}
+
 
 /* Check collision ==================================================================================================== */
 function collision($div1, $div2) {
@@ -141,6 +191,19 @@ function check_collision(){
 		alert('No collision');
 	}
 }
+
+/* Check direction of char ========================================================================================== */
+function check_direction() {
+	if($('#char').hasClass('char_up'))
+		return 1;
+	if($('#char').hasClass('char_right'))
+		return 2;
+	if($('#char').hasClass('char_down'))
+		return 3;
+	if($('#char').hasClass('char_left'))
+		return 4;	
+}
+
 
 /* Check if move is possible ======================================================================================== */
  function checkMove(direction)

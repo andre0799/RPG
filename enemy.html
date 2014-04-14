@@ -38,7 +38,7 @@ chars={}
 
 $(document).ready(function(){
 	//create a new WebSocket object.
-	var wsUri = "ws://192.168.0.12:9090/demo/server.php"; 	
+	var wsUri = "ws://192.168.0.20:9090/demo/server.php"; 	
 	websocket = new WebSocket(wsUri); 
 	
 	websocket.onopen = function(ev) { // connection is open 
@@ -104,24 +104,16 @@ function send_socket(id, type, param){
 //----------------------------------------------
 
 
-	var mapMatrix= [
-				[0,1,1,0,0,0,0,1,0,0],
-				[0,0,0,0,0,0,0,1,1,0],
-				[1,1,0,0,0,0,0,0,1,0],
-				[0,0,0,0,0,1,1,0,0,0],
-				[0,0,0,0,1,0,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,0,1,0,0],
-				[0,0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,1,1,1,0,0,0],
-				[1,1,0,0,0,0,0,0,0,0]
-									];
-	
-	map_width = 10;
-	map_height = 10;
+</script>
+
+<script type="text/javascript" src="js/map.js"></script>
+
+<script>
 
 	var x2 = 4;
 	var y2 = 2;
+	
+	var RANGE = 5;
 
 	function updateChars(i,t,p)
 	{
@@ -321,7 +313,7 @@ function send_socket(id, type, param){
 		y1=chars[target][0];
 
 		
-		direction = getDir(x2, y2, x1, y1, map, 35);
+		direction = getDir(x2, y2, x1, y1, map, RANGE);
 		
 		
 		
@@ -381,7 +373,7 @@ function move_enemy()
 	interv = setInterval(function(){
 		clearInterval(interv);	
 		
-		targ=charInRange(35);
+		targ=charInRange();
 		move_enemy_pathfinding();
 		move_enemy();
 

@@ -41,7 +41,7 @@ function initializeNetPlayer(id, x_char, y_char, direction, sprite) {
 		console.log("Initializing "+sprite);
 		chars[id]=[x_char, y_char, direction, sprite];
 		// Writes object on the map
-		$("#body").append('<div id='+id+' class="char_down" style="top:'+(y_char*SQUARE-HALF_SQUARE)+'px;left:'+(x_char*SQUARE)+'px;position:absolute;z-index:'+y_char+'; width: 32px; height: 48px; background:url(img/'+sprite+');"><div id="username">'+id+'</div><div id="chat" class="chat_balloon"><div id="text">Peniana</div></div></div>');
+		$("#body").append('<div id='+id+' class="char_down" style="top:'+(y_char*SQUARE-HALF_SQUARE)+'px;left:'+(x_char*SQUARE)+'px;position:absolute;z-index:'+y_char+'; width: 32px; height: 48px; background:url(img/'+sprite+');"><div id="hit">300</div><div id="username">'+id+'</div><div id="chat" class="chat_balloon"><div id="text">Peniana</div></div></div>');
 	}
 }
 

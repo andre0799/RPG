@@ -15,7 +15,7 @@ var websocket;
 
 $(document).ready(function(){
 	// Connection.
-	var wsUri = "ws://192.168.0.12:9090/demo/server.php"; 	
+	var wsUri = "ws://192.168.0.20:9090/demo/server.php"; 	
 	websocket = new WebSocket(wsUri); 
 	
 	websocket.onopen = function(ev) {
