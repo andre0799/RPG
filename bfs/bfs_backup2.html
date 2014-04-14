@@ -1,0 +1,512 @@
+<html>
+<head>
+	<script type="text/javascript" src="js/jquery.js"></script>
+</head>
+<body>
+	<div id="map"></div>
+</body>
+</html>
+
+<style type="text/css">
+.chat_wrapper {
+	width: 500px;
+	margin-right: auto;
+	margin-left: auto;
+	background: #CCCCCC;
+	border: 1px solid #999999;
+	padding: 10px;
+	font: 12px 'lucida grande',tahoma,verdana,arial,sans-serif;
+}
+.chat_wrapper .message_box {
+	background: #FFFFFF;
+	height: 150px;
+	overflow: auto;
+	padding: 10px;
+	border: 1px solid #999999;
+}
+.chat_wrapper .panel input{
+	padding: 2px 2px 2px 5px;
+}
+.system_msg{color: #BDBDBD;font-style: italic;}
+.user_name{font-weight:bold;}
+.user_message{color: #88B6E0;}
+</style>
+
+<script>
+
+chars={}
+
+$(document).ready(function(){
+	//create a new WebSocket object.
+	var wsUri = "ws://192.168.0.12:9090/demo/server.php"; 	
+	websocket = new WebSocket(wsUri); 
+	
+	websocket.onopen = function(ev) { // connection is open 
+		$('#message_box').append("<div class=\"system_msg\">Connected!</div>"); //notify user
+		initialize_enemies();
+		move_enemy();
+	}
+
+	$('#send-btn').click(function(){ //use clicks message send button	
+		var myID = $('#id').val(); //get user name
+		var myType = $('#type').val();
+		var myParams = $('#params').val(); //get message text
+		
+		
+		//prepare json data
+		var msg = {
+		id: myID,
+		type:myType,
+		params: myParams
+		};
+		//convert and send data to server
+		websocket.send(JSON.stringify(msg));
+	});
+	
+	//#### Message received from server?
+	websocket.onmessage = function(ev) {
+		var msg = JSON.parse(ev.data); //PHP sends Json data
+		var type = msg.type; //message type
+		var prms = msg.params; //message text
+		var uid = msg.id; //user name
+
+		updateChars(uid,type,prms);
+
+
+		if(type == 'system')
+		{
+			//$('#message_box').append("<div class=\"system_msg\">"+umsg+"</div>");
+		}
+		else
+		{
+			$('#message_box').append("<div>ID: "+uid+" Type:"+type+" Params:"+prms+"</div>");
+		}
+		
+		
+		$('#message').val(''); //reset text
+	};
+	
+	websocket.onerror	= function(ev){$('#message_box').append("<div class=\"system_error\">Error Occurred - "+ev.data+"</div>");}; 
+	websocket.onclose 	= function(ev){$('#message_box').append("<div class=\"system_msg\">Connection Closed</div>");}; 
+
+
+});
+
+function send_socket(id, type, param){
+	document.getElementById('id').value = id;
+	document.getElementById('type').value = type;
+	document.getElementById('params').value = param;
+
+	$('#send-btn').click();
+}
+
+
+//----------------------------------------------
+	function updateChars(i,t,p)
+	{
+		if(t=='direction')
+		{
+			return false;	
+		}	
+		if(i!='enemy' && i){
+			if(t=='initialize')
+			{
+				parameter = p.split(',');
+				console.log("#initialize: "+parameter[0]+" "+parameter[1]);
+				chars[i]=[parseInt(parameter[0]),parseInt(parameter[1])];
+				console.log("chars[i]=[parameter[0],parameter[1]]; "+i+" "+parameter[0]+" "+parameter[1]);
+
+				// x1=parameter[1];
+				// y1=parameter[0];
+				// x1=1;
+				// y1=1;
+				// console.log("x/y "+i+" "+x1+" "+y1);
+
+			}
+			else if(t=='move')
+			{
+				parameter = p.split(',');
+				console.log("#move: "+parameter[0]+" "+parameter[1]);
+				chars[i]=[parseInt(parameter[0]),parseInt(parameter[1])];
+				console.log("chars[i]=[parameter[0],parameter[1]]; "+i+" "+parameter[0]+" "+parameter[1]);
+
+				// x1=parseInt(parameter[1]);
+				// y1=parseInt(parameter[0]);
+				// x1=1;
+				// y1=1;
+				
+				// console.log("x/y "+i+" "+x1+" "+y1);
+
+			}	
+		}
+		else if(i=='enemy' && i)
+		{
+			parameter = p.split(',');
+			chars[i]=[parseInt(parameter[0]),parseInt(parameter[1])];
+			x2=parseInt(parameter[1]);
+			y2=parseInt(parameter[0]);
+			// x2=4;
+			// y2=2;
+			console.log("chars[i]=[parameter[0],parameter[1]]; "+i+" "+parameter[0]+" "+parameter[1]);
+
+		}	
+	}
+
+	function euclidDist(a, b) {
+		return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+	}
+	function fillWith(obj, value, rows, col) {
+		for(var i=0; i<rows; i++) {
+			var aux = [];
+			for(var j=0; j<col; j++) {
+				aux.push(value);
+			}
+			obj.push(aux);
+		}
+	}
+	
+	
+	// returns the direction to follow: [r]ight, [l]eft, [d]own or [u]p?
+	function getDir(player_x, player_y, target_x, target_y, map, range) {
+		player = { x: player_x, y: player_y };
+		target = { x: target_x, y: target_y, prev: 'x' };
+		dir = [[1, 0, 'u'], [-1, 0, 'd'], [0, 1, 'l'], [0, -1, 'r']];
+		visi = [];
+		fillWith(visi, false, map.height, map.width);
+		
+		if(euclidDist(player, target) > range) {
+			move_random();
+			return "Do nothing";
+		}
+		
+		queue = [];
+		queue.push(target);
+		while(queue.length != 0) {
+			aux = queue.shift();
+			if(aux.x == player.x && aux.y == player.y) return aux.prev; // finally!
+			else if(euclidDist(aux, player) > range) continue; // too far
+			else if(aux.x < 0 || aux.x >= map.width || aux.y < 0 || aux.y >= map.height) continue; // i shouldn't be here
+			else if(map.pos[aux.x][aux.y] == true) continue; // i can't walk through walls =/
+			else if(visi[aux.x][aux.y] == true) continue; // i've been here before
+			visi[aux.x][aux.y] = true;
+			
+			//alert(aux.x + ", " + aux.y + ", " + aux.prev);
+			
+			var aux2 = new Object();
+			for(var i=0; i<4; i++) {
+				aux2.x = aux.x+dir[i][0];
+				aux2.y = aux.y+dir[i][1];
+				aux2.prev = dir[i][2];
+				
+				queue.push(aux2);
+				var aux2 = new Object();
+			}
+		}
+		
+		return "Do nothing";
+	}
+	
+	function move_random()
+	{
+		console.log("moving random....");
+		rand=Math.floor((Math.random()*4)+1);
+		if(rand==1)
+		{
+			if(checkMove("right"))
+			{
+				y2++;
+				send_socket("enemy","move",y2+","+x2);
+			}
+			else if(checkMove("left"))
+			{
+				y2--;
+				send_socket("enemy","move",y2+","+x2);
+			}rand=2;	
+				
+		}
+		else if(rand==2)
+		{
+			if(checkMove("down"))
+			{
+				x2++;
+				send_socket("enemy","move",y2+","+x2);
+			}
+			else if(checkMove("up"))
+			{
+				x2--;
+				send_socket("enemy","move",y2+","+x2);
+			}
+			rand=3;
+		}
+		else if(rand==3)
+		{
+			if(checkMove("left"))
+			{
+				y2--;
+				send_socket("enemy","move",y2+","+x2);
+			}
+			else if(checkMove("right"))
+			{
+				y2++;
+				send_socket("enemy","move",y2+","+x2);
+			}rand=4;
+		}
+		else if(rand==4)
+		{
+			if(checkMove("up"))
+			{
+				x2--;
+				send_socket("enemy","move",y2+","+x2);
+			}
+			else if(checkMove("down"))
+			{
+				x2++;
+				send_socket("enemy","move",y2+","+x2);
+			}rand=1;
+		}
+	}
+
+	var mapMatrix= [
+				[0,1,1,0,0,0,0,1,0,0],
+				[0,0,0,0,0,0,0,1,1,0],
+				[1,1,0,0,0,0,0,0,1,0],
+				[0,0,0,0,0,1,1,0,0,0],
+				[0,0,0,0,1,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,1,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,1,1,1,0,0,0],
+				[1,1,0,0,0,0,0,0,0,0]
+									];
+	
+	map_width = 10;
+	map_height = 10;
+			
+	console.log("aeeeeeee pohaaaa: "+mapMatrix.length);	
+
+	function checkMove(direction)
+ 	{
+ 	console.log("testando y:"+y2+" x:"+x2+" mapMatrix.length: "+map_width);
+
+    switch(direction)
+    {
+        case "up":
+            console.log("up");
+            if((x2-1)<0 || mapMatrix[x2-1][y2]===1 )
+            {
+                return false;
+            }
+            return true;	
+        case "down":
+            console.log("down");
+            if((x2+1)>=map_width-1 ||  mapMatrix[x2+1][y2]===1)
+            {
+                return false;
+            }
+            return true;
+        case "left":
+            console.log("left");
+            if( (y2-1)<0 || mapMatrix[x2][y2-1]===1)
+            {
+                return false;
+            }
+            return true;
+        case "right":
+            console.log("right");
+            if( (y2+1)>=map_width-1 || mapMatrix[x2][y2+1]===1)
+            {
+                return false;
+            }
+            return true;
+    }
+ }
+	
+	
+	
+	
+	/* Map ========================================================================================================================= */
+
+
+	//}
+	
+	
+	
+
+
+
+
+/* Show colision matrix
+ =================================================================================================================== */
+
+function showMatrix()
+{
+	for(i=0;i<mapMatrix.length;i++)
+	{
+		for(j=0;j<mapMatrix[i].length;j++)
+		{
+			div =  document.getElementById(j+'_'+i).innerHTML=mapMatrix[i][j];
+
+		}
+	}
+}									
+
+/* Generate Map =================================================================================================================== */
+
+
+SQUARE = 32
+
+var map = document.getElementById('map');
+map.style.height = (map_width * SQUARE)+'px';
+map.style.width = (map_height * SQUARE)+'px';
+
+var sprite="Sprites/tileset/002-Woods01.png";
+
+
+
+function paintObjects(){
+	for(i=0;i<mapMatrix.length;i++)
+	{
+		for(j=0;j<mapMatrix[i].length;j++)
+		{
+			if(mapMatrix[i][j]==1)
+			{
+				$("#map").append('<div id="'+j+'_'+i+'" style="position:absolute; z-index:1; width: 32px; height: 32px; left:'+j*32+'px; top:'+i*32+'px; background:url(img/Sprites/tileset/002-Woods01.png); background-position: 128px 0px;text-align:center;"></div>');
+				//console.log("i: "+i+" j:"+j );
+			} else {
+				$("#map").append('<div id="'+j+'_'+i+'" style="border:1px solid #ccc;position:absolute; z-index:1; width: 32px; height: 32px; left:'+j*32+'px; top:'+i*32+'px;"></div>');
+			} 
+			
+		}
+	}
+	
+}
+
+
+paintObjects();
+
+	//map.pos.push(mapMatrix);
+	
+	//peniana = array_flip(map.pos);
+	
+	
+	
+	//var x1 = 1;
+	//var y1 = 1;
+	
+	
+	//$('#'+y1+'_'+x1).html('P1');
+	
+	
+	var x2 = 4;
+	var y2 = 2;
+	
+	//$('#'+y2+'_'+x2).html('E1');
+	
+	function initialize_enemies()
+	{	
+		send_socket("enemy", "initialize", y2+","+x2+",3,Sprites/characters/018-Thief03.png");
+	}
+
+	//while(x1!=x2 || y1!=y2){
+	
+	function move_enemy_pathfinding() {
+
+
+		
+		var map = {
+		height: 10,
+		width: 10,
+		pos:mapMatrix 
+		
+		};
+		fillWith(mapMatrix, false, map.height, map.width);
+		
+		x1=chars['js'][1];
+		y1=chars['js'][0];
+
+		direction = getDir(x2, y2, x1, y1, map, 2);
+		
+		//console.log(x1+","+y1+" = "+x2+","+y2);
+		
+		
+		console.log(direction);
+		if(direction == 'r'){
+			if(y2==y1-1 && x2==x1)
+			{
+				send_socket("enemy","direction",2);
+			}
+			else
+			{
+				y2++;
+				send_socket("enemy","move",y2+","+x2);
+			}	
+		}
+		else if(direction == 'l'){
+			if(y2==y1+1 && x2==x1)
+			{
+				send_socket("enemy","direction",4);
+			}
+			else
+			{
+				y2--;
+				send_socket("enemy","move",y2+","+x2);
+			}	
+		}
+		else if(direction == 'd'){
+			if(x2==x1-1 && y2==y1)
+			{
+				send_socket("enemy","direction",3);
+			}
+			else
+			{
+				x2++;
+				send_socket("enemy","move",y2+","+x2);
+			}
+		}
+		else if(direction == 'u'){
+			
+
+			if(x2==x1+1 && y2==y1)
+			{
+				send_socket("enemy","direction",1);
+			}
+			else
+			{
+				x2--;
+				send_socket("enemy","move",y2+","+x2);
+			}
+		
+		}
+		$('#'+y2+'_'+x2).html(direction);
+
+		
+	
+		
+			
+	}
+
+function move_enemy()
+{
+	interv = setInterval(function(){
+		clearInterval(interv);
+
+		move_enemy_pathfinding();
+		move_enemy();
+
+		},1000);
+}
+
+
+
+</script>
+<button onclick="move_enemy_pathfinding();">Exec penis</button>
+<div class="chat_wrapper">
+<div class="message_box" id="message_box"></div>
+<div class="panel">
+<input type="text" name="id" id="id" placeholder="ID" maxlength="10" style="width:20%"  />
+<input type="text" name="type" id="type" placeholder="Type" maxlength="10" style="width:20%"  />
+<input type="text" name="params" id="params" placeholder="Parameters" maxlength="80" style="width:40%" />
+<button id="send-btn">Send</button>
+<button id="penis" onclick="alert(chars.length)">show</button>
+</div>
+</div>

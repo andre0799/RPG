@@ -1,0 +1,203 @@
+body {
+	margin:0px;
+	background:#000;
+	font-family:Helvetica;
+}
+
+#textbox{
+	position:absolute;
+	bottom:7px;
+	width:400px;
+	height:60px;
+	z-index:2;
+	left: 10px;
+}
+
+#username {
+	color:#FFF;
+	position:absolute;
+	left:-34px;
+	top:-15px;
+	font-weight:bold;
+	text-shadow:1px 1px 1px #000;
+	font-size:10px;
+	width:100px;
+	margin:auto;
+	text-align:center;
+	opacity:0.7;
+}
+
+/* teste */
+
+#commandbox{
+	position:absolute;
+	bottom:400px;
+	right: 30px;
+	width:400px;
+	height:50px;
+	z-index:2;
+}
+
+#submitCommand{
+	bottom: 10px;
+	position: absolute;
+}
+
+/* ******************* */
+
+.chat_balloon {
+	display:none;
+	position:absolute;
+	width:150px;
+	left:-59px;
+	text-align:center;
+	bottom:55px;
+	z-index:9999;
+}
+
+#text{
+	display: inline-block;
+	position:relative;
+	bottom:0px;
+	padding:4px 8px;
+	background:#FFF;
+	max-width:150px;
+	width:auto;
+	border-radius:5px;
+	color:#000;
+	opacity:0.9;
+	word-wrap:break-word;
+	font-size:12px;
+}
+
+#map {
+	background:url(img/tileset.png) #CCC;
+	background-position:0px 0px;
+	position:relative;
+}
+
+#char {	
+	position:absolute;
+	z-index:1;
+	width: 32px;
+	height: 48px;	
+	background:url(img/aluxes.png);	
+}
+
+.char_down {
+	background-position: 0px 0px !important;
+}
+
+.char_down_animate{
+	-webkit-animation-name: change_down;
+  	-webkit-animation-duration: 0.5s;
+  
+  	/* steps(n) is a timing function */
+  	-webkit-animation-timing-function: steps(2);
+  
+  	-webkit-animation-iteration-count: infinite;
+}
+
+/* Animation to walk down */
+@-webkit-keyframes change_down {
+  
+  0% {
+    background-position: -32px 0px;
+  }
+  
+  
+  100% {
+    background-position: 96px 0px;    
+  }
+
+}
+
+.char_up {
+	background-position: 0px 48px !important;
+}
+
+.char_up_animate{
+	-webkit-animation-name: change_up;
+  	-webkit-animation-duration: 0.5s;
+  
+  	/* steps(n) is a timing function */
+  	-webkit-animation-timing-function: steps(2);
+  
+  	-webkit-animation-iteration-count: infinite;
+}
+
+/* Animation to walk up */
+@-webkit-keyframes change_up {
+  
+  0% {
+    background-position: -32px 48px;
+  }
+  
+  
+  100% {
+    background-position: 96px 48px;    
+  }
+
+}
+.char_left {
+	background-position: 0px 144px !important;
+}
+
+.char_left_animate{
+	-webkit-animation-name: change_left;
+  	-webkit-animation-duration: 0.5s;
+  
+  	/* steps(n) is a timing function */
+  	-webkit-animation-timing-function: steps(2);
+  
+  	-webkit-animation-iteration-count: infinite;
+}
+
+/* Animation to walk left */
+@-webkit-keyframes change_left {
+  
+  0% {
+    background-position: -32px 144px;
+  }
+  
+  50%{
+  	background-position: 32px 144px;
+  }
+  
+  100% {
+    background-position: 96px 144px;    
+  }
+
+}
+
+.char_right {
+	background-position: 0px 96px !important;
+}
+
+.char_right_animate{
+	-webkit-animation-name: change_right;
+  	-webkit-animation-duration: 0.5s;
+  
+  	/* steps(n) is a timing function */
+  	-webkit-animation-timing-function: steps(2);
+  
+  	-webkit-animation-iteration-count: infinite;
+}
+
+/* Animation to walk right */
+@-webkit-keyframes change_right {
+  
+  0% {
+    background-position: -32px 96px;
+  }
+  
+  50%{
+  	background-position: 32px 96px;
+  }
+  
+  100% {
+    background-position: 96px 96px;    
+  }
+
+}
+

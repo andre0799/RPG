@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8' />
+<style type="text/css">
+.chat_wrapper {
+	width: 500px;
+	margin-right: auto;
+	margin-left: auto;
+	background: #CCCCCC;
+	border: 1px solid #999999;
+	padding: 10px;
+	font: 12px 'lucida grande',tahoma,verdana,arial,sans-serif;
+}
+.chat_wrapper .message_box {
+	background: #FFFFFF;
+	height: 150px;
+	overflow: auto;
+	padding: 10px;
+	border: 1px solid #999999;
+}
+.chat_wrapper .panel input{
+	padding: 2px 2px 2px 5px;
+}
+.system_msg{color: #BDBDBD;font-style: italic;}
+.user_name{font-weight:bold;}
+.user_message{color: #88B6E0;}
+</style>
+</head>
+<body>	
+
+<script src="js/jquery.js"></script>
+
+<script language="javascript" type="text/javascript">  
+
+chars={}
+
+$(document).ready(function(){
+	//create a new WebSocket object.
+	var wsUri = "ws://192.168.0.12:9090/demo/server.php"; 	
+	websocket = new WebSocket(wsUri); 
+	
+	websocket.onopen = function(ev) { // connection is open 
+		$('#message_box').append("<div class=\"system_msg\">Connected!</div>"); //notify user
+		initialize_enemies();
+		move_enemy();
+	}
+
+	$('#send-btn').click(function(){ //use clicks message send button	
+		var myID = $('#id').val(); //get user name
+		var myType = $('#type').val();
+		var myParams = $('#params').val(); //get message text
+		
+		
+		//prepare json data
+		var msg = {
+		id: myID,
+		type:myType,
+		params: myParams
+		};
+		//convert and send data to server
+		websocket.send(JSON.stringify(msg));
+	});
+	
+	//#### Message received from server?
+	websocket.onmessage = function(ev) {
+		var msg = JSON.parse(ev.data); //PHP sends Json data
+		var type = msg.type; //message type
+		var prms = msg.params; //message text
+		var uid = msg.id; //user name
+
+		updateChars(uid,type,prms);
+
+
+		if(type == 'system')
+		{
+			//$('#message_box').append("<div class=\"system_msg\">"+umsg+"</div>");
+		}
+		else
+		{
+			$('#message_box').append("<div>ID: "+uid+" Type:"+type+" Params:"+prms+"</div>");
+		}
+		
+		
+		$('#message').val(''); //reset text
+	};
+	
+	websocket.onerror	= function(ev){$('#message_box').append("<div class=\"system_error\">Error Occurred - "+ev.data+"</div>");}; 
+	websocket.onclose 	= function(ev){$('#message_box').append("<div class=\"system_msg\">Connection Closed</div>");}; 
+
+
+});
+
+function send_socket(id, type, param){
+	// Send sockets
+	// console.log('sending');
+	
+	document.getElementById('id').value = id;
+	document.getElementById('type').value = type;
+	document.getElementById('params').value = param;
+
+	$('#send-btn').click();
+}
+
+/* Don't change functions
+==========================================================================================================================================*/
+
+var x=1, y=1; range_enemy=15;
+
+var mapMatrix= [
+				[0,1,1,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,1,1,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,1,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0],
+				[1,1,0,0,0,0,0,0,0,0],
+									];
+
+var map = {
+		height: 10,
+		width: 10,
+		pos:mapMatrix
+};
+
+
+
+function euclidDist(a, b) {
+	return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+}
+function fillWith(obj, value, rows, col) {
+	for(var i=0; i<rows; i++) {
+		var aux = [];
+		for(var j=0; j<col; j++) {
+			aux.push(value);
+		}
+		obj.push(aux);
+	}
+}
+	
+	
+
+/*=====================================================================================================================*/	
+
+
+
+function initialize_enemies()
+{	
+	send_socket("enemy", "initialize", x+",5,3,Sprites/characters/018-Thief03.png");
+}
+
+function updateChars(i,t,p)
+{
+	// console.log("updatChars() id:"+i);
+	if(i!='enemy' && i){
+		if(t=='initialize')
+		{
+			parameter = p.split(',');
+			console.log("#initialize: "+parameter[0]+" "+parameter[1]);
+			chars[i]=[parameter[0],parameter[1]];
+		}
+		else if(t=='move')
+		{
+			parameter = p.split(',');
+			console.log("#move: "+parameter[0]+" "+parameter[1]);
+			chars[i]=[parameter[0],parameter[1]];
+		}	
+	}	
+}
+
+
+function move_enemy()
+{
+	interv = setInterval(function(){
+		clearInterval(interv);
+		target=charInRange(range_enemy);
+		// console.log("Xtarget: "+target);
+
+		// if(target && target!=0)
+		// {
+		// 	move_withPath(target);
+		// }
+		// else
+		// {
+		// 	move_random();
+		// }	
+		// move_enemy();
+
+		move_withPath(target);
+
+	},1000);
+}
+
+
+
+function move_withPath(target)
+{
+	if(chars[target][0] == x+1 && chars[target][1] == y)
+	{
+		send_socket("enemy","direction",2);
+	}
+	else if(chars[target][0] == x-1 && chars[target][1] == y)
+	{
+		send_socket("enemy","direction",4);
+	}
+	else if(chars[target][1] == y+1 && chars[target][0] == x)
+	{
+		send_socket("enemy","direction",3);
+	}	
+	else if(chars[target][1] == y-1 && chars[target][0] == x)
+	{
+		send_socket("enemy","direction",1);
+	}	
+	else{	
+		if(chars[target][0]<x && checkMove("left"))
+		{
+			x--;
+			send_socket("enemy","move",x+","+y);
+		}
+		else if(chars[target][0]>x && checkMove("right"))
+		{
+			x++;
+			send_socket("enemy","move",x+","+y);
+		}
+		else if(chars[target][1]<y && checkMove("up"))
+		{
+			y--;
+			send_socket("enemy","move",x+","+y);
+		}
+		else if(chars[target][1]>y && checkMove("down"))
+		{
+			y++;
+			send_socket("enemy","move",x+","+y);
+		}
+	}
+
+
+	fillWith(mapMatrix, false, 10, 10);
+	
+	// console.log(y+" "+ x+" "+ chars[target][1]+" "+ chars[target][0]+" "+ map+" "+ range_enemy);
+	direction = getDir(x, y, chars[target][0], chars[target][1], map, range_enemy);
+	console.log("direction:"+direction+" y/x:"+parseInt(chars[target][0])+" "+ parseInt(chars[target][1]));
+	// if(direction == 'r')
+	// 		//y++; 
+	// 	send_socket("enemy","message","right");
+	// else if(direction == 'l')
+	// 		send_socket("enemy","message","left");
+	// 		//y--;
+	// 	else if(direction == 'd')
+	// 		send_socket("enemy","message","down");
+	// 		//x++;
+	// 	else if(direction == 'u')
+	// 		send_socket("enemy","message","up");
+	// 		//x--;
+}
+
+// returns the direction to follow: [r]ight, [l]eft, [d]own or [u]p?
+	function getDir(player_x, player_y, target_x, target_y, map, range) {
+		// console.log("mapppp "+map.pos);
+		player = { x: player_x, y: player_y };
+		console.log("player = { x: player_x, y: player_y }; "+player.x +" "+ player.y);
+		target = { x: target_x, y: target_y, prev: 'x' };
+		console.log("target = { x: target_x, y: target_y, prev: 'x' }; "+target.x +" "+ target.y+" "+target.prev);
+
+		// console.log("aux: "+target.x0+" "+player.x0+" "+target.y0+" "+player.y0);
+		dir = [[1, 0, 'u'], [-1, 0, 'd'], [0, 1, 'l'], [0, -1, 'r']];
+		visi = [];
+		fillWith(visi, false, map.width, map.height);
+		
+		if(euclidDist(player, target) > range) {
+			return "Do nothing, too far";
+		}
+		
+		queue = [];
+		queue.push(target);
+		// console.log("length "+queue.length);
+		while(queue.length != 0) {
+			aux = queue.shift();
+			// console.log("length "+queue.length);
+			// console.log("aux.x "+aux.x);
+			// map.pos = undefined;
+	//------------- Debugging ----------------------------//		
+			// if(typeof map.pos === "undefined")
+			// {
+			// 	console.log("##map.pos");
+			// }
+			// if(typeof aux.x === "undefined")
+			// {
+			// 	console.log("##aux[aux.x]");
+			// }
+			// if(typeof aux.y === "undefined")
+			// {
+			// 	console.log("##aux[aux.x][aux.y]");
+			// }
+			// if(typeof aux.x[aux.y] === "undefined")
+			// {
+			// 	console.log("##aux.x[aux.y]");
+			// }	
+			console.log("aux x/y: "+aux.x+" "+aux.y);
+	//---------------------------------------------------//		
+			if(aux.x == player.x && aux.y == player.y) 
+			{
+				console.log("finally "); 
+				return aux.prev;
+			} // finally!
+			else if(euclidDist(aux, player) > range) 
+			{
+				console.log("too far "); 
+				continue;
+			} // too far
+			else if(aux.x < 0 || aux.x >= map.width || aux.y < 0 || aux.y >= map.height) 
+			{
+				console.log("i shouldn't be here "); 
+				continue;
+			} // i shouldn't be here
+
+			else if(map.pos[aux.x][aux.y] == true) 
+			{
+				console.log("i can't walk through walls"); 
+				continue;
+			} // i can't walk through walls =/
+			else if(visi[aux.x][aux.y] == true) 
+			{
+				console.log("i've been here before"); 
+				continue;
+			} // i've been here before
+			visi[aux.x][aux.y] = true;
+			
+			//alert(aux.x + ", " + aux.y + ", " + aux.prev);
+			
+			var aux2 = new Object();
+			for(var i=0; i<4; i++) {
+				aux2.x = aux.x+dir[i][0];
+				aux2.y = aux.y+dir[i][1];
+				aux2.prev = dir[i][2];
+				
+				queue.push(aux2);
+				var aux2 = new Object();
+			}
+		}
+		
+		return "Do nothing";
+	}
+
+function move_random()
+{
+		console.log("moving random....");
+		rand=Math.floor((Math.random()*4)+1);
+		if(rand==1)
+		{
+			if(checkMove("right"))
+			{
+				x++;
+				send_socket("enemy","move",x+","+y);
+			}
+			else if(checkMove("left"))
+			{
+				x--;
+				send_socket("enemy","move",x+","+y);
+			}rand=2;	
+				
+		}
+		else if(rand==2)
+		{
+			if(checkMove("down"))
+			{
+				y++;
+				send_socket("enemy","move",x+","+y);
+			}
+			else if(checkMove("up"))
+			{
+				y--;
+				send_socket("enemy","move",x+","+y);
+			}
+			rand=3;
+		}
+		else if(rand==3)
+		{
+			if(checkMove("left"))
+			{
+				x--;
+				send_socket("enemy","move",x+","+y);
+			}
+			else if(checkMove("right"))
+			{
+				x++;
+				send_socket("enemy","move",x+","+y);
+			}rand=4;
+		}
+		else if(rand==4)
+		{
+			if(checkMove("up"))
+			{
+				y--;
+				send_socket("enemy","move",x+","+y);
+			}
+			else if(checkMove("down"))
+			{
+				y++;
+				send_socket("enemy","move",x+","+y);
+			}rand=1;
+		}
+}
+
+function charInRange(range)
+{
+	closeChars = [];
+	areCharsNearby=false;
+	for (key in chars)
+	{
+		if(!key)
+		{
+			// console.log("returning 0.");
+			return 0;//In case there are not players initialize
+			
+		}
+		array = chars[key];
+		// console.log("checando player:"+key+" x:"+array[0]+" y:"+array[1]);
+		if((array[0]>=x-range && array[0]<=x+range) && (array[1]>=y-range && array[1]<=y+range))
+		{
+			// console.log(key+" in range");
+			closeChars.unshift(key);
+			areCharsNearby=true;
+		}
+	}
+
+	if(areCharsNearby){
+		closestChar=closeChars[0];
+
+		for (idx=0; idx<closeChars.length;idx++)
+		{
+			// console.log("iddddd: "+closeChars[idx]);
+			if(Math.abs(chars[closeChars[idx]][0]-x)+Math.abs(chars[closeChars[idx]][1]-y)<Math.abs(chars[closestChar][0]-x)+Math.abs(chars[closestChar][1])-y);
+			{
+				closestChar=closeChars[idx];
+			}
+		}
+
+		if(closeChars.length==0)
+		{
+			// console.log("returning 0..");
+			return 0;	
+		}
+		else
+		{
+			// console.log("closestChar");
+			return closestChar;
+		}
+	}
+	return 0;
+}
+
+/* Check if move is possible ======================================================================================== */
+ function checkMove(direction)
+ {
+ 	// console.log("testando y:"+y+" x:"+x);
+
+    switch(direction)
+    {
+        case "up":
+            //console.log("up");
+            if((y-1)<0 || mapMatrix[y-1][x]===1 )
+            {
+                return false;
+            }
+            return true;	
+        case "down":
+            //console.log("down");
+            if((y+1)==mapMatrix.length ||  mapMatrix[y+1][x]===1)
+            {
+                return false;
+            }
+            return true;
+        case "left":
+            //console.log("left");
+            if( (x-1)<0 || mapMatrix[y][x-1]===1)
+            {
+                return false;
+            }
+            return true;
+        case "right":
+            //console.log("right");
+            if( (x+1)==mapMatrix.length || mapMatrix[y][x+1]===1)
+            {
+                return false;
+            }
+            return true;
+    }
+ }
+
+
+
+</script>
+<div class="chat_wrapper">
+<div class="message_box" id="message_box"></div>
+<div class="panel">
+<input type="text" name="id" id="id" placeholder="ID" maxlength="10" style="width:20%"  />
+<input type="text" name="type" id="type" placeholder="Type" maxlength="10" style="width:20%"  />
+<input type="text" name="params" id="params" placeholder="Parameters" maxlength="80" style="width:40%" />
+<button id="send-btn">Send</button>
+<button id="penis" onclick="alert(chars.length)">show</button>
+</div>
+</div>
+
+</body>
+</html>

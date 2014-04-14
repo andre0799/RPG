@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Interface</title>
+	<link rel="stylesheet" type="text/css" href="style_interface.css">
+	<script type="text/javascript" src="js/jquery.js"></script>
+</head>
+<body>
+	<div id="mainDiv">
+		<p id="labelName">Character name:</p> 
+		<input id="inputCharName" type="text"/>
+		<div id="divSelector" >
+			<img src="img/Sprites/battlers/001-Fighter01.png" alt="charImg" id="imgView">	
+		</div>
+		<button id="previous" onclick="previus_btn()"><</button>
+		<button id="next" onclick="next_btn();">></button>
+		<button id="connect_btn" onclick="connect()">Connect</button>
+	</div>
+
+	<!-- ************* Script ************* -->
+	<script type="text/javascript">
+		var indexSelc=0;
+		var sprites=["001-Fighter01.png", "002-Fighter02.png", "003-Fighter03.png", "004-Fighter04.png", "005-Fighter05.png"]; 
+
+		function previus_btn () {
+			if(indexSelc===0)
+			{
+				//First char
+				indexSelc=sprites.length-1;
+				document.getElementById('imgView').src="img/Sprites/battlers/"+sprites[indexSelc];
+			}
+			else
+			{
+				indexSelc--;
+				document.getElementById('imgView').src="img/Sprites/battlers/"+sprites[indexSelc];
+			}	
+		}
+
+		function next_btn() {
+			if(indexSelc===sprites.length-1)
+			{
+				//Last char
+				indexSelc=0;
+				document.getElementById('imgView').src="img/Sprites/battlers/"+sprites[indexSelc];
+			}
+			else
+			{
+				indexSelc++;
+				document.getElementById('imgView').src="img/Sprites/battlers/"+sprites[indexSelc];
+			}
+		}
+
+		function connect()
+		{
+			console.log("connecting...");
+			location.href="game.html?user="+document.getElementById('inputCharName').value+"&sprite=Sprites/characters/"+sprites[indexSelc];
+		}
+
+		$("#inputCharName").bind("keypress", {}, keypressInBox);
+
+		function keypressInBox(e) {
+		    var code = (e.keyCode ? e.keyCode : e.which);
+		    if (code == 13) { //Enter keycode                        
+		        e.preventDefault();
+		        console.log("enter pressed");
+		        // $("yourFormId").submit();
+		    }
+		};
+	</script>
+</body>
+</html>
