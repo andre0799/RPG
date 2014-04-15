@@ -8,12 +8,16 @@ A fast and real time open source MMORPG demo. Developed in HTML 5, JavaScript an
 
 Features 
 ------------
--Multiplayer functionality
--Cross browser
--Real time player movement
--Zelda-like battle system
--Events and enemies artificial intelligence (AI) 
--Character selection
--Map editor
-
-
+-Multiplayer functionality.
+<br>
+-Cross browser.
+<br>
+-Real time player movement.
+<br>
+-Zelda-like battle system.
+<br>
+-Events and enemies artificial intelligence (AI).
+<br> 
+-Character selection.
+<br>
+-Map editor.
